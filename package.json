@@ -1,0 +1,32 @@
+{
+  "name": "lybica-hdfs-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "./node_modules/.bin/_mocha -R spec",
+    "start": "node ./app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybicat/lybica-hdfs-viewer.git"
+  },
+  "keywords": [
+    "hdfs",
+    "zip"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lybicat/lybica-hdfs-viewer/issues"
+  },
+  "homepage": "https://github.com/lybicat/lybica-hdfs-viewer#readme",
+  "dependencies": {
+    "restify": "^4.0.3",
+    "webhdfs": "^0.3.0"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^2.3.3"
+  }
+}
