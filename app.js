@@ -16,6 +16,12 @@ server.use(function(req, res, next) {
 });
 
 
+server.get('/hdfs/:filePath', function(req, res, next) {
+  res.send(404, {err: 'file "' + req.params.filePath + '" not found'});
+  return next();
+});
+
+
 server.listen(config.PORT, function() {
     console.log('%s listening at %s', server.name, server.url);
 });
