@@ -15,8 +15,8 @@ describe('/hdfs/(action)', function() {
     done();
   });
 
-  it('GET /hdfs/<file path> return 404 when file not found', function(done) {
-    client.get('/hdfs/unexist_file', function(err, req, res, obj) {
+  it('GET /hdfs/ return 404 when file not found', function(done) {
+    client.get('/hdfs/?path=/unexist', function(err, req, res, obj) {
       expect(err).not.to.eql(null);
       expect(res.statusCode).to.eql(404);
       done();
