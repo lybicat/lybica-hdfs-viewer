@@ -1,4 +1,5 @@
 var restify = require('restify');
+var WebHDFS = require('webhdfs');
 var config = require('./config');
 
 var server = restify.createServer({
@@ -16,24 +17,43 @@ server.use(function(req, res, next) {
 });
 
 
+var hdfs = WebHDFS.createClient({
+  user: config.HDFS_USER,
+  host: config.HDFS_HOST,
+  port: config.HDFS_PORT,
+  path: config.HDFS_PATH
+});
+
+
 // read
-server.get('/hdfs/', function(req, res, next) {
-  res.send(404, {err: 'file "' + req.params.path + '" not found'});
-  return next();
+// TODO: 1. support normal file on hdfs
+// 2. support zip file on fly
+// 3. support file in zip file on fly
+server.get('/hdfs', function(req, res, next) {
+  hdfs.exists(req.params.path, function(fileExist) {
+    if (!fileExist) {
+      res.send(404, {err: 'file "' + req.params.path + '" not found'});
+      return next();
+    }
+    var remoteStream = hdfs.createReadStream(req.params.path);
+    remoteStream.pipe(res);
+    res.on('end', next);
+  });
 });
 
 
 // write
-server.post('/hdfs/', function(req, res, next) {
+server.post('/hdfs', function(req, res, next) {
   return next();
 });
 
 
 // delete
-server.del('/hdfs/', function(req, res, next) {
+server.del('/hdfs', function(req, res, next) {
   return next();
 });
 
 server.listen(config.PORT, function() {
   console.log('%s listening at %s', server.name, server.url);
 });
+

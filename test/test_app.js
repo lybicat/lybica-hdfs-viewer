@@ -1,7 +1,7 @@
 var restify = require('restify');
 var expect = require('expect.js');
 
-describe('/hdfs/(action)', function() {
+describe('/hdfs', function() {
   var client;
 
   before(function(done) {
@@ -16,7 +16,7 @@ describe('/hdfs/(action)', function() {
   });
 
   it('GET /hdfs/ return 404 when file not found', function(done) {
-    client.get('/hdfs/?path=/unexist', function(err, req, res, obj) {
+    client.get('/hdfs?path=/unexist', function(err, req, res, obj) {
       expect(err).not.to.eql(null);
       expect(res.statusCode).to.eql(404);
       done();
