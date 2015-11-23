@@ -1,5 +1,6 @@
 var restify = require('restify');
 var WebHDFS = require('webhdfs');
+var path = require('path');
 var config = require('./config');
 
 var server = restify.createServer({
@@ -36,6 +37,7 @@ server.get('/hdfs', function(req, res, next) {
       return next();
     }
     var remoteStream = hdfs.createReadStream(req.params.path);
+    res.setHeader('content-disposition', 'attachment; filename="' + path.basename(req.params.path) +'"');
     remoteStream.pipe(res);
     res.on('end', next);
   });
