@@ -1,7 +1,7 @@
 var restify = require('restify');
-var WebHDFS = require('webhdfs');
 var path = require('path');
 var config = require('./config');
+var hdfs = require('./hdfs');
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -15,14 +15,6 @@ server.use(restify.bodyParser());
 server.use(function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
   return next();
-});
-
-
-var hdfs = WebHDFS.createClient({
-  user: config.HDFS_USER,
-  host: config.HDFS_HOST,
-  port: config.HDFS_PORT,
-  path: config.HDFS_PATH
 });
 
 
