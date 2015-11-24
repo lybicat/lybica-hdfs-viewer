@@ -7,7 +7,7 @@ describe('/hdfs', function() {
   var client;
 
   before(function(done) {
-    client = restify.createJsonClient({
+    client = restify.createStringClient({
       url: process.env.HDFS_VIEWER_URL
     });
     var hdfs = require('../hdfs');
@@ -20,8 +20,9 @@ describe('/hdfs', function() {
   });
 
   after(function(done) {
-    var hdfs = require('../hdfs');
-    hdfs.rmdir('/unittest', true, done);
+    //var hdfs = require('../hdfs');
+    //hdfs.rmdir('/unittest', true, done);
+    done();
   });
 
   it('GET /hdfs/ return 404 when file not found', function(done) {
@@ -36,6 +37,24 @@ describe('/hdfs', function() {
     client.get('/hdfs?path=/unittest/zipfile1.zip', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
+      done();
+    });
+  });
+
+  it('GET /hdfs/ return file content in zip', function(done) {
+    client.get('/hdfs?path=/unittest/zipfile1.zip&type=zip&entry=file1.txt', function(err, req, res, obj) {
+      expect(err).to.eql(null);
+      expect(res.statusCode).to.eql(200);
+      expect(obj).to.eql('["file1", "file2"]');
+      done();
+    });
+  });
+
+  it('GET /hdfs/ return file list in directory of zip', function(done) {
+    client.get('/hdfs?path=/unittest/zipfile1.zip&type=zip', function(err, req, res, obj) {
+      expect(err).to.eql(null);
+      expect(res.statusCode).to.eql(200);
+      expect(obj).to.eql('file1\n');
       done();
     });
   });

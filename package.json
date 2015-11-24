@@ -22,9 +22,9 @@
   },
   "homepage": "https://github.com/lybicat/lybica-hdfs-viewer#readme",
   "dependencies": {
-    "archiver": "^0.16.0",
     "moment": "^2.10.6",
     "restify": "^4.0.3",
+    "unzip": "^0.1.11",
     "uuid": "^2.0.1",
     "webhdfs": "^0.3.0"
   },

@@ -4,6 +4,7 @@ var config = require('./config');
 var hdfs = require('./hdfs');
 var moment = require('moment');
 var uuid = require('uuid');
+var unzip = require('unzip');
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -19,19 +20,50 @@ server.use(function(req, res, next) {
 });
 
 
+function _readZipFile(entryPath, srcStream, response) {
+  if (entryPath) {
+    srcStream.pipe(unzip.Parse())
+    .on('entry', function(entry) {
+      if (entry.path === entryPath) {
+        if (entry.type === 'File') {
+          entry.pipe(response);
+          return;
+        } else {
+          // TODO: show sub level of file list
+        }
+      }
+      entry.autodrain();
+    });
+  } else {
+    var entries = [];
+    srcStream.pipe(unzip.Parse())
+    .on('entry', function(entry) {
+      entries.push(entry.path);
+      entry.autodrain();
+      // TODO: when all the entry is ready?
+    });
+  }
+}
+
+
 // read
-// TODO: 1. support normal file on hdfs
-// 2. support zip file on fly
-// 3. support file in zip file on fly
 server.get('/hdfs', function(req, res, next) {
+  var hdfsPath = req.params.path;
+  var fileType = req.params.type;
+  var entryPath = req.params.entry;
+
   hdfs.exists(req.params.path, function(fileExist) {
     if (!fileExist) {
-      res.send(404, {err: 'file "' + req.params.path + '" not found'});
+      res.send(404, {err: 'file "' + hdfsPath + '" not found'});
       return next();
     }
-    var remoteStream = hdfs.createReadStream(req.params.path);
-    res.setHeader('content-disposition', 'attachment; filename="' + path.basename(req.params.path) +'"');
-    remoteStream.pipe(res);
+    var remoteStream = hdfs.createReadStream(hdfsPath);
+    if (fileType === 'zip') {
+      _readZipFile(entryPath, remoteStream, res);
+    } else {
+      res.setHeader('content-disposition', 'attachment; filename="' + path.basename(req.params.path) +'"');
+      remoteStream.pipe(res);
+    }
     res.on('end', next);
   });
 });
@@ -57,6 +89,7 @@ server.post('/hdfs', function(req, res, next) {
 
 
 // delete
+// TODO
 server.del('/hdfs', function(req, res, next) {
   return next();
 });
