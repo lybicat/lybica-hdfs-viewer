@@ -1,6 +1,7 @@
 var restify = require('restify');
 var expect = require('expect.js');
 var fs = require('fs');
+var request = require('request');
 
 describe('/hdfs', function() {
   var client;
@@ -36,6 +37,19 @@ describe('/hdfs', function() {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
       done();
+    });
+  });
+
+  it('POST /hdfs/ return 200', function(done) {
+    var req = request.post(process.env.HDFS_VIEWER_URL + '/hdfs');
+    fs.createReadStream(__dirname + '/data/zipfile1.zip').pipe(req);
+    req.on('response', function(res) {
+      expect(res.statusCode).to.eql(200);
+      var hdfs = require('../hdfs');
+      hdfs.exists(res.headers.hdfsurl, function(fileExist) {
+        expect(fileExist).to.eql(true);
+        done();
+      });
     });
   });
 });

@@ -2,6 +2,8 @@ var restify = require('restify');
 var path = require('path');
 var config = require('./config');
 var hdfs = require('./hdfs');
+var moment = require('moment');
+var uuid = require('uuid');
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -10,7 +12,6 @@ var server = restify.createServer({
 
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
-server.use(restify.bodyParser());
 
 server.use(function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -38,7 +39,20 @@ server.get('/hdfs', function(req, res, next) {
 
 // write
 server.post('/hdfs', function(req, res, next) {
-  return next();
+  var now = moment();
+  var dirPath = '/lybica/' + now.format('YYYY/MM/DD');
+  var fileName = now.format('HHmmss') + '_' + uuid.v1().substr(0, 6);
+  var remoteStream = hdfs.createWriteStream(dirPath + '/' + fileName);
+  req.pipe(remoteStream);
+  remoteStream.on('error', function(err) {
+    res.send(400, {err: err});
+    return next();
+  });
+  remoteStream.on('finish', function() {
+    res.setHeader('hdfsurl', dirPath + '/' + fileName);
+    res.send(200, {path: dirPath + '/' + fileName});
+    return next();
+  });
 });
 
 

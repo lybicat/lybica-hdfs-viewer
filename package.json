@@ -23,11 +23,14 @@
   "homepage": "https://github.com/lybicat/lybica-hdfs-viewer#readme",
   "dependencies": {
     "archiver": "^0.16.0",
+    "moment": "^2.10.6",
     "restify": "^4.0.3",
+    "uuid": "^2.0.1",
     "webhdfs": "^0.3.0"
   },
   "devDependencies": {
     "expect.js": "^0.3.1",
-    "mocha": "^2.3.3"
+    "mocha": "^2.3.3",
+    "request": "^2.67.0"
   }
 }
