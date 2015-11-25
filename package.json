@@ -24,7 +24,7 @@
   "dependencies": {
     "moment": "^2.10.6",
     "restify": "^4.0.3",
-    "unzip": "^0.1.11",
+    "unzip2": "^0.2.5",
     "uuid": "^2.0.1",
     "webhdfs": "^0.3.0"
   },

@@ -4,7 +4,7 @@ var config = require('./config');
 var hdfs = require('./hdfs');
 var moment = require('moment');
 var uuid = require('uuid');
-var unzip = require('unzip');
+var unzip = require('unzip2');
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -20,27 +20,54 @@ server.use(function(req, res, next) {
 });
 
 
+function _getZipEntries(zipStream, callback) {
+  // TODO: entries is not correct
+  var entries = [];
+  zipStream.pipe(unzip.Parse())
+  .on('entry', function(entry) {
+    entries.push({path: entry.path, size: entry.size});
+    entry.autodrain();
+  })
+  .on('finish', function() {
+    callback(entries);
+  });
+}
+
+
+String.prototype.startswith = function(s) {
+  return this.substr(0, s.length) === s;
+};
+
+
+String.prototype.endswith = function(s) {
+  return this.substr(this.length - s.length, this.length) === s;
+};
+
+
 function _readZipFile(entryPath, srcStream, response) {
-  if (entryPath) {
+  if (entryPath === undefined) {
+    entryPath = '/';
+  }
+
+  if (entryPath.endswith('/')) {
+    // TODO: show sub level of file list
+    _getZipEntries(srcStream, function(entries) {
+      if (entryPath === '/') {
+        response.send(entries);
+      } else {
+        response.send(entries.filter(function(e) {
+          return e.path.startswith(entryPath);
+        }));
+      }
+    });
+  } else {
     srcStream.pipe(unzip.Parse())
     .on('entry', function(entry) {
       if (entry.path === entryPath) {
-        if (entry.type === 'File') {
-          entry.pipe(response);
-          return;
-        } else {
-          // TODO: show sub level of file list
-        }
+        entry.pipe(response);
+        return;
       }
       entry.autodrain();
-    });
-  } else {
-    var entries = [];
-    srcStream.pipe(unzip.Parse())
-    .on('entry', function(entry) {
-      entries.push(entry.path);
-      entry.autodrain();
-      // TODO: when all the entry is ready?
     });
   }
 }
