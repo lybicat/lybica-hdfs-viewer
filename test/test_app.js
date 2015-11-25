@@ -53,7 +53,7 @@ describe('/hdfs', function() {
     client.get('/hdfs/unittest/zipfile1.zip!/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
-      expect(obj).to.eql('["file1.txt", "file2.txt"]');
+      expect(obj).to.eql('[{"path":"file2.txt"},{"path":"file1.txt"}]');
       done();
     });
   });

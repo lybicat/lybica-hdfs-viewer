@@ -21,14 +21,13 @@ server.use(function(req, res, next) {
 
 
 function _getZipEntries(zipStream, callback) {
-  // TODO: entries is not correct
   var entries = [];
   zipStream.pipe(unzip.Parse())
   .on('entry', function(entry) {
-    entries.push({path: entry.path, size: entry.size});
+    entries.push({path: entry.path});
     entry.autodrain();
   })
-  .on('finish', function() {
+  .on('close', function() {
     callback(entries);
   });
 }
