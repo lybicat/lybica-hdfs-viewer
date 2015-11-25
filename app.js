@@ -116,9 +116,15 @@ server.post('/hdfs', function(req, res, next) {
 
 
 // delete
-// TODO
 server.del('/hdfs', function(req, res, next) {
-  return next();
+  hdfs.rmdir(req.params.path, true, function(err) {
+    if (err) {
+      return next(err);
+    } else {
+      res.send(200);
+      return next();
+    }
+  });
 });
 
 server.listen(config.PORT, function() {
