@@ -44,14 +44,10 @@ String.prototype.endswith = function(s) {
 };
 
 
-function _readZipFile(entryPath, srcStream, response) {
-  if (entryPath === undefined) {
-    entryPath = '/';
-  }
-
+function _readZipFile(entryPath, zipStream, response) {
   if (entryPath.endswith('/')) {
     // TODO: show sub level of file list
-    _getZipEntries(srcStream, function(entries) {
+    _getZipEntries(zipStream, function(entries) {
       if (entryPath === '/') {
         response.send(entries);
       } else {
@@ -61,25 +57,28 @@ function _readZipFile(entryPath, srcStream, response) {
       }
     });
   } else {
-    srcStream.pipe(unzip.Parse())
+    zipStream.pipe(unzip.Parse())
     .on('entry', function(entry) {
       if (entry.path === entryPath) {
         entry.pipe(response);
-        return;
+      } else {
+        entry.autodrain();
       }
-      entry.autodrain();
     });
   }
 }
 
 
 // read
-server.get('/hdfs', function(req, res, next) {
-  var hdfsPath = req.params.path;
-  var fileType = req.params.type;
-  var entryPath = req.params.entry;
+server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
+  var hdfsPath = req.params[0];
+  if (!hdfsPath.startswith('/')) {
+    hdfsPath = '/' + hdfsPath;
+  }
+  var entryPath = req.params[1] || '/';
+  var fileType = req.params.type || 'zip';
 
-  hdfs.exists(req.params.path, function(fileExist) {
+  hdfs.exists(hdfsPath, function(fileExist) {
     if (!fileExist) {
       res.send(404, {err: 'file "' + hdfsPath + '" not found'});
       return next();
@@ -88,7 +87,7 @@ server.get('/hdfs', function(req, res, next) {
     if (fileType === 'zip') {
       _readZipFile(entryPath, remoteStream, res);
     } else {
-      res.setHeader('content-disposition', 'attachment; filename="' + path.basename(req.params.path) +'"');
+      res.setHeader('content-disposition', 'attachment; filename="' + path.basename(hdfsPath) +'"');
       remoteStream.pipe(res);
     }
     res.on('end', next);
@@ -116,8 +115,12 @@ server.post('/hdfs', function(req, res, next) {
 
 
 // delete
-server.del('/hdfs', function(req, res, next) {
-  hdfs.rmdir(req.params.path, true, function(err) {
+server.del(/hdfs\/(\S+)/, function(req, res, next) {
+  var hdfsPath = req.params[0];
+  if (!hdfsPath.startswith('/')) {
+    hdfsPath = '/' + hdfsPath;
+  }
+  hdfs.rmdir(hdfsPath, true, function(err) {
     if (err) {
       return next(err);
     } else {

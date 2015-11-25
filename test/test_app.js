@@ -25,7 +25,7 @@ describe('/hdfs', function() {
   });
 
   it('GET /hdfs/ return 404 when file not found', function(done) {
-    client.get('/hdfs?path=/unexist', function(err, req, res, obj) {
+    client.get('/hdfs/unexist!/', function(err, req, res, obj) {
       expect(err).not.to.eql(null);
       expect(res.statusCode).to.eql(404);
       done();
@@ -33,7 +33,7 @@ describe('/hdfs', function() {
   });
 
   it('GET /hdfs/ return 200 when file exist', function(done) {
-    client.get('/hdfs?path=/unittest/zipfile1.zip', function(err, req, res, obj) {
+    client.get('/hdfs/unittest/zipfile1.zip!/?type=raw', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
       done();
@@ -41,7 +41,7 @@ describe('/hdfs', function() {
   });
 
   it('GET /hdfs/ return file content in zip', function(done) {
-    client.get('/hdfs?path=/unittest/zipfile1.zip&type=zip&entry=file1.txt', function(err, req, res, obj) {
+    client.get('/hdfs/unittest/zipfile1.zip!/file1.txt', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
       expect(obj).to.eql('file1\n');
@@ -50,7 +50,7 @@ describe('/hdfs', function() {
   });
 
   it('GET /hdfs/ return file list in directory of zip', function(done) {
-    client.get('/hdfs?path=/unittest/zipfile1.zip&type=zip', function(err, req, res, obj) {
+    client.get('/hdfs/unittest/zipfile1.zip!/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
       expect(obj).to.eql('["file1.txt", "file2.txt"]');
