@@ -49,11 +49,20 @@ describe('/hdfs', function() {
     });
   });
 
-  it('GET /hdfs/ return file list in directory of zip', function(done) {
+  it('GET /hdfs/ return file list in top directory of zip', function(done) {
     client.get('/hdfs/unittest/zipfile1.zip!/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
-      expect(obj).to.eql('[{"path":"file2.txt"},{"path":"file1.txt"}]');
+      expect(obj).to.eql('[{"path":"sub/"},{"path":"file1.txt"},{"path":"file2.txt"}]');
+      done();
+    });
+  });
+
+  it('GET /hdfs/ return file list in sub directory of zip', function(done) {
+    client.get('/hdfs/unittest/zipfile1.zip!/sub/', function(err, req, res, obj) {
+      expect(err).to.eql(null);
+      expect(res.statusCode).to.eql(200);
+      expect(obj).to.eql('[{"path":"sub/empty"},{"path":"sub/subsub/"}]');
       done();
     });
   });

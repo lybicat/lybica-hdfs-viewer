@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/lybicat/lybica-hdfs-viewer#readme",
   "dependencies": {
+    "jade": "^1.11.0",
     "moment": "^2.10.6",
     "restify": "^4.0.3",
     "unzip": "git+https://github.com/lybicat/node-unzip-2.git",
