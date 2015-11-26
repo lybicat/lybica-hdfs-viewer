@@ -4,7 +4,7 @@ var config = require('./config');
 var hdfs = require('./hdfs');
 var moment = require('moment');
 var uuid = require('uuid');
-var unzip = require('unzip2');
+var unzip = require('unzip');
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
