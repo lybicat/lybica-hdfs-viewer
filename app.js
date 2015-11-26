@@ -6,6 +6,9 @@ var moment = require('moment');
 var uuid = require('uuid');
 var unzip = require('unzip');
 var jade = require('jade');
+var cache = require('node-cache');
+
+var entryCache = new cache({stdTTL: 86400});
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -45,8 +48,14 @@ String.prototype.strip = function(s) {
 };
 
 
-function _getZipEntries(zipStream, callback) {
+function _getZipEntries(hdfsPath, callback) {
+  var cachedEntries = entryCache.get(hdfsPath);
+  if (cachedEntries !== undefined) {
+    return callback(cachedEntries);
+  }
+
   var entries = [];
+  var zipStream = hdfs.createReadStream(hdfsPath);
   zipStream.pipe(unzip.Parse())
   .on('entry', function(entry) {
     entries.push({path: entry.path, type: entry.type, size: entry.size});
@@ -54,6 +63,7 @@ function _getZipEntries(zipStream, callback) {
   })
   .on('close', function() {
     callback(entries);
+    entryCache.set(hdfsPath, entries);
   });
 }
 
@@ -63,8 +73,8 @@ function _getHtml(entries) {
 }
 
 
-function _renderDirectory(entryPath, zipStream, response) {
-  _getZipEntries(zipStream, function(entries) {
+function _renderDirectory(entryPath, hdfsPath, response) {
+  _getZipEntries(hdfsPath, function(entries) {
     var renderedEntries;
     if (entryPath === '/') {
       renderedEntries = entries.filter(function(e) {
@@ -94,8 +104,9 @@ function _renderDirectory(entryPath, zipStream, response) {
 }
 
 
-function _renderFile(entryPath, zipStream, response) {
-  zipStream.pipe(unzip.Parse())
+function _renderFile(entryPath, hdfsPath, response) {
+  hdfs.createReadStream(hdfsPath)
+  .pipe(unzip.Parse())
   .on('entry', function(entry) {
     if (entry.path === entryPath) {
       entry.pipe(response);
@@ -121,8 +132,7 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
   if (!hdfsPath.startswith('/')) {
     hdfsPath = '/' + hdfsPath;
   }
-  var entryPath = req.params[1] || '/';
-  entryPath = decodeURI(entryPath);
+  var entryPath = decodeURI(req.params[1]) || '/';
   var fileType = req.params.type || 'zip';
 
   hdfs.exists(hdfsPath, function(fileExist) {
@@ -130,12 +140,15 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
       res.send(404, {err: 'file "' + hdfsPath + '" not found'});
       return next();
     }
-    var remoteStream = hdfs.createReadStream(hdfsPath);
     if (fileType === 'zip') {
-      _readZipFile(entryPath, remoteStream, res);
+      if (entryPath.endswith('/')) {
+        _renderDirectory(entryPath, hdfsPath, res);
+      } else {
+        _renderFile(entryPath, hdfsPath, res);
+      }
     } else {
       res.setHeader('content-disposition', 'attachment; filename="' + path.basename(hdfsPath) +'"');
-      remoteStream.pipe(res);
+      hdfs.createReadStream(hdfsPath).pipe(res);
     }
     res.on('end', next);
   });
