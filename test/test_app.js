@@ -53,7 +53,7 @@ describe('/hdfs', function() {
     client.get('/hdfs/unittest/zipfile1.zip!/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
-      expect(obj).to.eql('[{"path":"sub/","type":"Directory","url":"sub/"},{"path":"file1.txt","type":"File","url":"file1.txt"},{"path":"file2.txt","type":"File","url":"file2.txt"}]');
+      expect(obj).to.eql('[{"path":"sub/","type":"Directory","size":0,"url":"sub/"},{"path":"file1.txt","type":"File","size":6,"url":"file1.txt"},{"path":"file2.txt","type":"File","size":6,"url":"file2.txt"}]');
       done();
     });
   });
@@ -62,7 +62,7 @@ describe('/hdfs', function() {
     client.get('/hdfs/unittest/zipfile1.zip!/sub/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
-      expect(obj).to.eql('[{"path":"sub/empty","type":"File","url":"empty"},{"path":"sub/subsub/","type":"Directory","url":"subsub/"}]');
+      expect(obj).to.eql('[{"path":"sub/empty","type":"File","size":0,"url":"empty"},{"path":"sub/subsub/","type":"Directory","size":0,"url":"subsub/"}]');
       done();
     });
   });
