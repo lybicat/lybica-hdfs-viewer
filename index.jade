@@ -1,0 +1,46 @@
+doctype html
+html(lang="utf-8")
+  head
+    title HDFS File Browser
+    style(type="text/css").
+      .table
+      {
+        display: table;
+        width: 90%;
+      }
+      .heading
+      {
+        display: table-row;
+        font-weight: bold;
+        background-color: lightblue;
+      }
+      .row
+      {
+        display: table-row;
+      }
+      .row:hover
+      {
+        background-color: lightyellow;
+      }
+      .cell
+      {
+        display: table-cell;
+        border-bottom: solid;
+        border-width: thin;
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+  body
+    h1 HDFS File Browser
+    div.table
+      div.heading
+        div.cell Name
+        div.cell Type
+        div.cell Size
+      for entry in entries
+        div.row
+          div.cell
+            a(href=entry.url)= entry.path
+          div.cell= entry.type
+          div.cell= entry.size
+
