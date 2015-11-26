@@ -8,7 +8,7 @@ var unzip = require('unzip');
 var jade = require('jade');
 var cache = require('node-cache');
 
-var entryCache = new cache({stdTTL: 86400});
+var entryCache = new cache({stdTTL: config.CACHE_TTL});
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
