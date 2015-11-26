@@ -37,6 +37,14 @@ String.prototype.count = function(lit) {
 };
 
 
+String.prototype.strip = function(s) {
+  if (!this.endswith(s)) {
+    return this;
+  }
+  return this.substr(0, this.length - s.length);
+};
+
+
 function _getZipEntries(zipStream, callback) {
   var entries = [];
   zipStream.pipe(unzip.Parse())
@@ -60,7 +68,7 @@ function _renderDirectory(entryPath, zipStream, response) {
     var renderedEntries;
     if (entryPath === '/') {
       renderedEntries = entries.filter(function(e) {
-        return e.path.count('/') === 0 || (e.path.count('/') === 1 && e.path.endswith('/'));
+        return e.path.strip('/').count('/') === 0;
       });
       renderedEntries.forEach(function(e) {
         e.url = e.path;
@@ -69,9 +77,7 @@ function _renderDirectory(entryPath, zipStream, response) {
       renderedEntries = entries.filter(function(e) {
         return e.path !== entryPath &&
           e.path.startswith(entryPath) &&
-          (e.path.count('/') === entryPath.trim('/').count('/') ||
-           (e.path.count('/') === entryPath.count('/') + 1 && e.path.endswith('/'))
-          );
+          e.path.strip('/').count('/') === entryPath.count('/');
       });
       renderedEntries.forEach(function(e) {
         e.url = e.path.substr(entryPath.length, e.path.length);
@@ -111,11 +117,12 @@ function _readZipFile(entryPath, zipStream, response) {
 
 // read
 server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
-  var hdfsPath = req.params[0];
+  var hdfsPath = decodeURI(req.params[0]);
   if (!hdfsPath.startswith('/')) {
     hdfsPath = '/' + hdfsPath;
   }
   var entryPath = req.params[1] || '/';
+  entryPath = decodeURI(entryPath);
   var fileType = req.params.type || 'zip';
 
   hdfs.exists(hdfsPath, function(fileExist) {
