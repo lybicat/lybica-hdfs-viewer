@@ -35,12 +35,12 @@ html(lang="utf-8")
     div.table
       div.heading
         div.cell Name
-        div.cell Type
+        div.cell Last Modified Date
         div.cell Size
       for entry in entries
         div.row
           div.cell
             a(href=entry.url)= entry.path
-          div.cell= entry.type
+          div.cell= entry.lastmod
           div.cell= entry.size
 
