@@ -5,10 +5,14 @@ var hdfs = require('./hdfs');
 var moment = require('moment');
 var uuid = require('uuid');
 var unzip = require('unzip');
+var fs = require('fs');
 var jade = require('jade');
 var cache = require('node-cache');
+var md5 = require('./hash').md5;
 
 var entryCache = new cache({stdTTL: config.CACHE_TTL});
+
+var cachedDir = __dirname + '/cache'; // cached zip file
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
@@ -48,22 +52,48 @@ String.prototype.strip = function(s) {
 };
 
 
+function _getZipPath(hdfsPath, callback) {
+  var filePath = cachedDir + '/' + md5(hdfsPath);
+  fs.exists(filePath, function(fileExist) {
+    if (!fileExist) {
+      var remoteStream = hdfs.createReadStream(hdfsPath);
+      var localStream = fs.createWriteStream(filePath);
+      remoteStream.pipe(localStream);
+      localStream.on('error', function(err) {
+        return callback(err);
+      }).on('finish', function() {
+        return callback(null, filePath);
+      });
+    }
+    return callback(null, filePath);
+  });
+}
+
+
 function _getZipEntries(hdfsPath, callback) {
   var cachedEntries = entryCache.get(hdfsPath);
   if (cachedEntries !== undefined) {
-    return callback(cachedEntries);
+    return callback(null, cachedEntries);
   }
 
   var entries = [];
-  var zipStream = hdfs.createReadStream(hdfsPath);
-  zipStream.pipe(unzip.Parse())
-  .on('entry', function(entry) {
-    entries.push({path: entry.path, type: entry.type, size: entry.size});
-    entry.autodrain();
-  })
-  .on('close', function() {
-    callback(entries);
-    entryCache.set(hdfsPath, entries);
+
+  _getZipPath(hdfsPath, function(err, zipPath) {
+    if (err) return callback(err);
+
+    fs.createReadStream(zipPath)
+      .pipe(unzip.Parse())
+      .on('entry', function(entry) {
+        entries.push({path: entry.path, type: entry.type, size: entry.size});
+        entry.autodrain();
+      })
+      .on('error', function(err) {
+        callback(err);
+      })
+      .on('close', function() {
+        callback(null, entries);
+        entryCache.set(hdfsPath, entries);
+      });
   });
 }
 
@@ -74,7 +104,9 @@ function _getHtml(entries) {
 
 
 function _renderDirectory(entryPath, hdfsPath, response) {
-  _getZipEntries(hdfsPath, function(entries) {
+  _getZipEntries(hdfsPath, function(err, entries) {
+    if (err) return response.send(400, err);
+
     var renderedEntries;
     if (entryPath === '/') {
       renderedEntries = entries.filter(function(e) {
@@ -105,23 +137,29 @@ function _renderDirectory(entryPath, hdfsPath, response) {
 
 
 function _renderFile(entryPath, hdfsPath, response) {
-  hdfs.createReadStream(hdfsPath)
-  .pipe(unzip.Parse())
-  .on('entry', function(entry) {
-    if (entry.path === entryPath) {
-      entry.pipe(response);
-    } else {
-      entry.autodrain();
-    }
+  _getZipPath(hdfsPath, function(err, zipPath) {
+    if (err) return response.send(400, err);
+    fs.createReadStream(zipPath)
+      .pipe(unzip.Parse())
+      .on('error', function(err) {
+        response.send(400, err);
+      })
+      .on('entry', function(entry) {
+        if (entry.path === entryPath) {
+          entry.pipe(response);
+        } else {
+          entry.autodrain();
+        }
+      });
   });
 }
 
 
-function _readZipFile(entryPath, zipStream, response) {
+function _readZipFile(entryPath, hdfsPath, res) {
   if (entryPath.endswith('/')) {
-    _renderDirectory(entryPath, zipStream, response);
+    _renderDirectory(entryPath, hdfsPath, res);
   } else {
-    _renderFile(entryPath, zipStream, response);
+    _renderFile(entryPath, hdfsPath, res);
   }
 }
 
@@ -141,11 +179,7 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
       return next();
     }
     if (fileType === 'zip') {
-      if (entryPath.endswith('/')) {
-        _renderDirectory(entryPath, hdfsPath, res);
-      } else {
-        _renderFile(entryPath, hdfsPath, res);
-      }
+      _readZipFile(entryPath, hdfsPath, res);
     } else {
       res.setHeader('content-disposition', 'attachment; filename="' + path.basename(hdfsPath) +'"');
       hdfs.createReadStream(hdfsPath).pipe(res);
