@@ -135,15 +135,16 @@ function _renderDirectory(entryPath, hdfsPath, response) {
 }
 
 
-function _renderFile(entryPath, hdfsPath, response) {
+function _renderFile(entryPath, hdfsPath, res) {
   _readZip(hdfsPath, function(err, zipfile) {
-    if (err) return response.send(400, err);
+    if (err) return res.send(400, err);
     zipfile.on('entry', function(entry) {
-      zipfile.openReadStream(entry, function(err, readStream) {
-        if (err) return response.send(400, err);
-        // FIXME
-        readStream.pipe(response);
-      });
+      if (entry.fileName === entryPath) {
+        zipfile.openReadStream(entry, function(err, readStream) {
+          if (err) return res.send(400, err);
+          readStream.pipe(res);
+        });
+      }
     });
   });
 }
