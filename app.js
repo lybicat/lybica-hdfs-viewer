@@ -60,8 +60,8 @@ function _openZip(filePath, callback) {
 
 function _readZip(hdfsPath, callback) {
   var filePath = cachedDir + '/' + md5(hdfsPath);
-  fs.exists(filePath, function(fileExist) {
-    if (!fileExist) {
+  fs.stat(filePath, function(err, stat) {
+    if (err !== null) {
       var remoteStream = hdfs.createReadStream(hdfsPath);
       var localStream = fs.createWriteStream(filePath);
       localStream
@@ -69,12 +69,12 @@ function _readZip(hdfsPath, callback) {
           return callback(err);
         })
         .on('finish', function() {
-          console.log('write hdfs file %s to %s', hdfsPath, filePath);
           _openZip(filePath, callback);
         });
       remoteStream.pipe(localStream);
+    } else {
+      _openZip(filePath, callback);
     }
-    _openZip(filePath, callback);
   });
 }
 

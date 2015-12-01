@@ -1,7 +1,7 @@
 {
   "name": "lybica-hdfs-viewer",
   "version": "1.0.0",
-  "description": "",
+  "description": "real time HDFS file viewer with zip file read on fly support",
   "main": "app.js",
   "scripts": {
     "test": "./node_modules/.bin/_mocha -R spec",
