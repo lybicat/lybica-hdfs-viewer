@@ -64,12 +64,14 @@ function _readZip(hdfsPath, callback) {
     if (!fileExist) {
       var remoteStream = hdfs.createReadStream(hdfsPath);
       var localStream = fs.createWriteStream(filePath);
+      localStream
+        .on('error', function(err) {
+          return callback(err);
+        })
+        .on('finish', function() {
+          _openZip(filePath, callback);
+        });
       remoteStream.pipe(localStream);
-      localStream.on('error', function(err) {
-        return callback(err);
-      }).on('finish', function() {
-        _openZip(filePath, callback);
-      });
     }
     _openZip(filePath, callback);
   });
@@ -85,14 +87,17 @@ function _getZipEntries(hdfsPath, callback) {
   var entries = [];
   _readZip(hdfsPath, function(err, zipfile) {
     if (err) return callback(err);
-    zipfile.on('entry', function(entry) {
-      entries.push({path: entry.fileName, size: entry.uncompressedSize, lastmod: entry.getLastModDate()});
-    }).on('error', function(err) {
-      callback(err);
-    }).on('close', function() {
-      callback(null, entries);
-      entryCache.set(hdfsPath, entries);
-    });
+    zipfile
+      .on('entry', function(entry) {
+        entries.push({path: entry.fileName, size: entry.uncompressedSize, lastmod: entry.getLastModDate()});
+      })
+      .on('error', function(err) {
+        callback(err);
+      })
+      .on('close', function() {
+        callback(null, entries);
+        entryCache.set(hdfsPath, entries);
+      });
   });
 }
 
@@ -166,14 +171,13 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
     hdfsPath = '/' + hdfsPath;
   }
   var entryPath = decodeURI(req.params[1]) || '/';
-  var fileType = req.params.type || 'zip';
 
   hdfs.exists(hdfsPath, function(fileExist) {
     if (!fileExist) {
       res.send(404, {err: 'file "' + hdfsPath + '" not found'});
       return next();
     }
-    if (fileType === 'zip') {
+    if (hdfsPath.endswith('.zip')) {
       _readZipFile(entryPath, hdfsPath, res);
     } else {
       res.setHeader('content-disposition', 'attachment; filename="' + path.basename(hdfsPath) +'"');

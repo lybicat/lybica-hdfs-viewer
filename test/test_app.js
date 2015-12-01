@@ -32,14 +32,6 @@ describe('/hdfs', function() {
     });
   });
 
-  it('GET /hdfs/ return 200 when file exist', function(done) {
-    client.get('/hdfs/unittest/zipfile1.zip!/?type=raw', function(err, req, res, obj) {
-      expect(err).to.eql(null);
-      expect(res.statusCode).to.eql(200);
-      done();
-    });
-  });
-
   it('GET /hdfs/ return file content in zip', function(done) {
     client.get('/hdfs/unittest/zipfile1.zip!/file1.txt', function(err, req, res, obj) {
       expect(err).to.eql(null);
