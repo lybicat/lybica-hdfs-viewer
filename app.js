@@ -69,6 +69,7 @@ function _readZip(hdfsPath, callback) {
           return callback(err);
         })
         .on('finish', function() {
+          console.log('write hdfs file %s to %s', hdfsPath, filePath);
           _openZip(filePath, callback);
         });
       remoteStream.pipe(localStream);
