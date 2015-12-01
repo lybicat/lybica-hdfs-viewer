@@ -4,8 +4,8 @@ var config = require('./config');
 var hdfs = require('./hdfs');
 var moment = require('moment');
 var uuid = require('uuid');
-var unzip = require('unzip');
 var fs = require('fs');
+var yauzl = require('yauzl');
 var jade = require('jade');
 var cache = require('node-cache');
 var md5 = require('./hash').md5;
@@ -51,8 +51,14 @@ String.prototype.strip = function(s) {
   return this.substr(0, this.length - s.length);
 };
 
+function _openZip(filePath, callback) {
+  yauzl.open(filePath, function(err, zipfile) {
+    if (err) return callback(err);
+    return callback(null, zipfile);
+  });
+}
 
-function _getZipPath(hdfsPath, callback) {
+function _readZip(hdfsPath, callback) {
   var filePath = cachedDir + '/' + md5(hdfsPath);
   fs.exists(filePath, function(fileExist) {
     if (!fileExist) {
@@ -62,10 +68,10 @@ function _getZipPath(hdfsPath, callback) {
       localStream.on('error', function(err) {
         return callback(err);
       }).on('finish', function() {
-        return callback(null, filePath);
+        _openZip(filePath, callback);
       });
     }
-    return callback(null, filePath);
+    _openZip(filePath, callback);
   });
 }
 
@@ -77,23 +83,16 @@ function _getZipEntries(hdfsPath, callback) {
   }
 
   var entries = [];
-
-  _getZipPath(hdfsPath, function(err, zipPath) {
+  _readZip(hdfsPath, function(err, zipfile) {
     if (err) return callback(err);
-
-    fs.createReadStream(zipPath)
-      .pipe(unzip.Parse())
-      .on('entry', function(entry) {
-        entries.push({path: entry.path, type: entry.type, size: entry.size});
-        entry.autodrain();
-      })
-      .on('error', function(err) {
-        callback(err);
-      })
-      .on('close', function() {
-        callback(null, entries);
-        entryCache.set(hdfsPath, entries);
-      });
+    zipfile.on('entry', function(entry) {
+      entries.push({path: entry.fileName, size: entry.uncompressedSize, lastmod: entry.getLastModDate()});
+    }).on('error', function(err) {
+      callback(err);
+    }).on('close', function() {
+      callback(null, entries);
+      entryCache.set(hdfsPath, entries);
+    });
   });
 }
 
@@ -137,20 +136,15 @@ function _renderDirectory(entryPath, hdfsPath, response) {
 
 
 function _renderFile(entryPath, hdfsPath, response) {
-  _getZipPath(hdfsPath, function(err, zipPath) {
+  _readZip(hdfsPath, function(err, zipfile) {
     if (err) return response.send(400, err);
-    fs.createReadStream(zipPath)
-      .pipe(unzip.Parse())
-      .on('error', function(err) {
-        response.send(400, err);
-      })
-      .on('entry', function(entry) {
-        if (entry.path === entryPath) {
-          entry.pipe(response);
-        } else {
-          entry.autodrain();
-        }
+    zipfile.on('entry', function(entry) {
+      zipfile.openReadStream(entry, function(err, readStream) {
+        if (err) return response.send(400, err);
+        // FIXME
+        readStream.pipe(response);
       });
+    });
   });
 }
 
