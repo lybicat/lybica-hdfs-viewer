@@ -172,13 +172,14 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
     hdfsPath = '/' + hdfsPath;
   }
   var entryPath = decodeURI(req.params[1]) || '/';
+  var fileType = req.params.type || 'zip';
 
   hdfs.exists(hdfsPath, function(fileExist) {
     if (!fileExist) {
       res.send(404, {err: 'file "' + hdfsPath + '" not found'});
       return next();
     }
-    if (hdfsPath.endswith('.zip')) {
+    if (hdfsPath.endswith('.zip') || fileType === 'zip') {
       _readZipFile(entryPath, hdfsPath, res);
     } else {
       res.setHeader('content-disposition', 'attachment; filename="' + path.basename(hdfsPath) +'"');
@@ -192,7 +193,7 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
 // write
 server.post('/hdfs', function(req, res, next) {
   var now = moment();
-  var dirPath = '/lybica/' + now.format('YYYY/MM/DD');
+  var dirPath = config.HDFS_PREFIX + now.format('YYYY/MM/DD');
   var fileName = now.format('HHmmss') + '_' + uuid.v1().substr(0, 6);
   var remoteStream = hdfs.createWriteStream(dirPath + '/' + fileName);
   req.pipe(remoteStream);

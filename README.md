@@ -124,14 +124,16 @@ To deploy `lybica-hdfs-viewer`, you should make sure `nodejs` was installed corr
 ### POST example
 
 ```javascript
+var fs = require('fs');
 var request = require('request');
 
 var req = request.post('http://localhost:3001/hdfs');
+fs.createReadStream(__dirname + '/data/zipfile1.zip').pipe(req);
+
 req.on('response', function(res) {
   console.log(res.headers.hdfsurl);
 });
 
-fs.createReadStream(__dirname + '/data/zipfile1.zip').pipe(req);
 ```
 
 ### Screenshot
