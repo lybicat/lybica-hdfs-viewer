@@ -1,6 +1,8 @@
 #!/bin/bash
 # delete cache files old than 1 day
 
-CURDIR=$PWD/`dirname $0`
+CURDIR=`dirname $0`
 
-find $CURDIR/cache -type f -mtime 1 | grep -v "\." | xargs rm -f
+echo "Clean old cached files under $CURDIR/cache"
+
+find $CURDIR/cache -type f -mtime +1 | grep -v "\." | xargs rm -f
