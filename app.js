@@ -1,3 +1,6 @@
+/* jshint node: true */
+'use strict';
+
 var restify = require('restify');
 var path = require('path');
 var config = require('./config');

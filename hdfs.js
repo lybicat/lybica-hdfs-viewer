@@ -1,3 +1,6 @@
+/* jshint node: true */
+'use strict';
+
 var WebHDFS = require('webhdfs');
 var config = require('./config');
 

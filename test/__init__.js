@@ -1,3 +1,6 @@
+/* jshint node: true */
+'use strict';
+
 before(function(done) {
     process.env.HDFS_VIEWER_PORT = Math.round(Math.random() * 10000) + 10000;
     delete process.env.http_proxy;

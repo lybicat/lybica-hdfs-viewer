@@ -1,3 +1,6 @@
+/* jshint node: true */
+'use strict';
+
 exports.PORT = process.env.HDFS_VIEWER_PORT || 3001;
 exports.HDFS_USER = process.env.HDFS_USER || process.env.USER;
 exports.HDFS_PORT = process.env.HDFS_PORT || 50070;

@@ -1,3 +1,6 @@
+/* jshint node: true */
+'use strict';
+
 var crypto = require('crypto');
 
 module.exports.md5 = function(text) {
