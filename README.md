@@ -139,7 +139,7 @@ req.on('response', function(res) {
 ```
 
 ```python
-// python script
+# python script
 
 import requests
 
