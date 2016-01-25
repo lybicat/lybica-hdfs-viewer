@@ -201,13 +201,11 @@ server.post('/hdfs', function(req, res, next) {
   var remoteStream = hdfs.createWriteStream(dirPath + '/' + fileName);
   req.pipe(remoteStream);
   remoteStream.on('error', function(err) {
-    res.send(400, {err: err});
-    return next();
+    return res.send(400, {err: err});
   });
   remoteStream.on('finish', function() {
     res.setHeader('hdfsurl', dirPath + '/' + fileName);
-    res.send(200, {path: dirPath + '/' + fileName});
-    return next();
+    return res.send(200, {path: dirPath + '/' + fileName});
   });
 });
 

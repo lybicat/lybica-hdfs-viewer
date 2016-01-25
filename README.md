@@ -123,6 +123,9 @@ To deploy `lybica-hdfs-viewer`, you should make sure `nodejs` was installed corr
 
 ### POST example
 
+* POST to 'http://localhost:3001/hdfs' will save file to a random generated path
+* While POST to 'http://localhost:3001/hdfs/just/test/test.zip' will save file to '/just/test/test.zip' in HDFS
+
 ```javascript
 // nodejs script
 
