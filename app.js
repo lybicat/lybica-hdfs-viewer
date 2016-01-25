@@ -15,7 +15,7 @@ var md5 = require('./hash').md5;
 
 var entryCache = new cache({stdTTL: config.CACHE_TTL});
 
-var cachedDir = __dirname + '/cache'; // cached zip file
+var cachedDir = __dirname + '/.cache'; // cached zip file
 
 var server = restify.createServer({
   name: 'hdfs-viewer',
