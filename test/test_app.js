@@ -74,5 +74,19 @@ describe('/hdfs', function() {
       });
     });
   });
+
+  it('POST /hdfs/just/a/test.zip return 200', function(done) {
+    var req = request.post(process.env.HDFS_VIEWER_URL + '/hdfs/just/a/test.zip');
+    fs.createReadStream(__dirname + '/data/zipfile1.zip').pipe(req);
+    req.on('response', function(res) {
+      expect(res.statusCode).to.eql(200);
+      expect(res.headers.hdfsurl).to.eql('/just/a/test.zip');
+      var hdfs = require('../hdfs');
+      hdfs.exists(res.headers.hdfsurl, function(fileExist) {
+        expect(fileExist).to.eql(true);
+        done();
+      });
+    });
+  });
 });
 

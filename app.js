@@ -194,19 +194,34 @@ server.get(/hdfs\/(\S+)!\/(.*)/, function(req, res, next) {
 
 
 // write
-server.post('/hdfs', function(req, res, next) {
-  var now = moment();
-  var dirPath = config.HDFS_PREFIX + now.format('YYYY/MM/DD');
-  var fileName = now.format('HHmmss') + '_' + uuid.v1().substr(0, 6);
-  var remoteStream = hdfs.createWriteStream(dirPath + '/' + fileName);
+function _saveHdfs(hdfsPath, req, res, next) {
+  var remoteStream = hdfs.createWriteStream(hdfsPath);
   req.pipe(remoteStream);
   remoteStream.on('error', function(err) {
     return res.send(400, {err: err});
   });
   remoteStream.on('finish', function() {
-    res.setHeader('hdfsurl', dirPath + '/' + fileName);
-    return res.send(200, {path: dirPath + '/' + fileName});
+    res.setHeader('hdfsurl', hdfsPath);
+    return res.send(200, {path: hdfsPath});
   });
+}
+
+server.post('/hdfs', function(req, res, next) {
+  var now = moment();
+  var dirPath = config.HDFS_PREFIX + now.format('YYYY/MM/DD');
+  var fileName = now.format('HHmmss') + '_' + uuid.v1().substr(0, 6);
+
+  return _saveHdfs(dirPath + '/' + fileName, req, res, next);
+});
+
+
+server.post(/hdfs\/(\S+)/, function(req, res, next) {
+  var hdfsPath = req.params[0];
+  if (!hdfsPath.startswith('/')) {
+    hdfsPath = '/' + hdfsPath;
+  }
+
+  return _saveHdfs(hdfsPath, req, res, next);
 });
 
 
