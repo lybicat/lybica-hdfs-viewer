@@ -12,6 +12,8 @@ var yauzl = require('yauzl');
 var jade = require('jade');
 var cache = require('node-cache');
 var md5 = require('./hash').md5;
+var log4js = require('log4js');
+log4js.configure(config.LOG4JS_SETTINGS);
 
 var entryCache = new cache({stdTTL: config.CACHE_TTL});
 
@@ -30,6 +32,12 @@ server.use(function(req, res, next) {
   return next();
 });
 
+// logging error request and response to error log
+server.on('after', function(req, res, err) {
+  if (res.statusCode >= 400) {
+    logger.error('%d %s\n=================================\nRequest: %s\n===============================\nResponse: %s', res.statusCode, req.path(), req, res);
+  }
+});
 
 String.prototype.startswith = function(s) {
   return this.substr(0, s.length) === s;
@@ -117,6 +125,7 @@ function _renderDirectory(entryPath, hdfsPath, response) {
 
     var renderedEntries;
     if (entryPath === '/') {
+      // top directory
       renderedEntries = entries.filter(function(e) {
         return e.path.strip('/').count('/') === 0;
       });
@@ -124,6 +133,7 @@ function _renderDirectory(entryPath, hdfsPath, response) {
         e.url = e.path;
       });
     } else {
+      // sub directory
       renderedEntries = entries.filter(function(e) {
         return e.path !== entryPath &&
           e.path.startswith(entryPath) &&
@@ -132,6 +142,9 @@ function _renderDirectory(entryPath, hdfsPath, response) {
       renderedEntries.forEach(function(e) {
         e.url = e.path.substr(entryPath.length, e.path.length);
       });
+
+      // add parent link
+      renderedEntries.unshift({path: '..', url: '../'});
     }
     if (process.env.IN_UNIT_TEST === 'y') {
       response.send(renderedEntries);

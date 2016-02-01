@@ -57,7 +57,7 @@ describe('/hdfs', function() {
     client.get('/hdfs/unittest/zipfile1.zip!/sub/', function(err, req, res, obj) {
       expect(err).to.eql(null);
       expect(res.statusCode).to.eql(200);
-      expect(obj).to.eql('[{"path":"sub/empty","size":0,"lastmod":"2015-11-26T01:14:24.000Z","url":"empty"},{"path":"sub/subsub/","size":0,"lastmod":"2015-11-26T01:14:44.000Z","url":"subsub/"}]');
+      expect(obj).to.eql('[{"path":"..","url":"../"}, {"path":"sub/empty","size":0,"lastmod":"2015-11-26T01:14:24.000Z","url":"empty"},{"path":"sub/subsub/","size":0,"lastmod":"2015-11-26T01:14:44.000Z","url":"subsub/"}]');
       done();
     });
   });

@@ -23,6 +23,7 @@
   "homepage": "https://github.com/lybicat/lybica-hdfs-viewer#readme",
   "dependencies": {
     "jade": "^1.11.0",
+    "log4js": "^0.6.30",
     "moment": "^2.10.6",
     "node-cache": "^3.0.0",
     "restify": "^4.0.3",
